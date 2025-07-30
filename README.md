@@ -1,0 +1,1 @@
+DoDeck is a modern full-stack task management application built using the MERN stack. It allows users to register, log in, and manage their personal tasks with full CRUD functionality. This project was built as part of the Full-Stack Developer skill test for **Axenora Technology**.
