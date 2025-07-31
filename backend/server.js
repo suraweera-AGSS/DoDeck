@@ -3,26 +3,21 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const dotenv = require('dotenv');
 
-// Load .env values
 dotenv.config();
-
-// Create express app
 const app = express();
 
-// Middleware
 app.use(cors());
 app.use(express.json());
 
-// Test Route (to verify backend works)
 app.get('/', (req, res) => {
     res.send('DoDeck Backend is working!');
 });
 
-// Routes (you'll create these files later)
+// Routes
 app.use('/api', require('./routes/auth'));
-app.use('/api', require('./routes/tasks'));
+app.use('/api/tasks', require('./routes/tasks'));
 
-// Connect to MongoDB
+// DB Connect
 mongoose.connect(process.env.MONGO_URI)
     .then(() => {
         console.log('MongoDB Connected!');
