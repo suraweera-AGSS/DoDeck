@@ -189,7 +189,16 @@ export default function Dashboard() {
 
     return (
         <div className="flex min-h-screen bg-gray-100">
-            <Toaster position="top-right" />
+            <Toaster 
+                position="top-center"
+                toastOptions={{
+                    style: {
+                        margin: '20px auto',
+                        maxWidth: '500px',
+                        padding: '16px 24px',
+                    },
+                }}
+            />
             <Sidebar 
                 isOpen={sidebarOpen}
                 isExpanded={isExpanded}
