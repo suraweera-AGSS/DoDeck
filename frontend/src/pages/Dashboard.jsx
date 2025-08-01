@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getTasks, createTask, deleteTask, updateTask } from '../services/task';
-import { FaTrash, FaSignOutAlt, FaBars, FaUserCircle } from 'react-icons/fa';
+import { FaTrash, FaSignOutAlt, FaBars, FaUserCircle, FaEdit, FaSave, FaTimes } from 'react-icons/fa';
 import Button from '../components/Button';
 import Sidebar from '../components/Sidebar';
 
@@ -12,6 +12,8 @@ export default function Dashboard() {
     const [error, setError] = useState('');
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [isExpanded, setIsExpanded] = useState(true);
+    const [editingTaskId, setEditingTaskId] = useState(null);
+    const [editingTitle, setEditingTitle] = useState('');
     const token = localStorage.getItem('token');
     const navigate = useNavigate();
 
@@ -50,6 +52,29 @@ export default function Dashboard() {
     const handleToggleComplete = async (task) => {
         try {
             await updateTask(task._id, { completed: !task.completed }, token);
+            loadTasks();
+        } catch (err) {
+            setError('Error updating task');
+        }
+    };
+
+    const handleEdit = (task) => {
+        setEditingTaskId(task._id);
+        setEditingTitle(task.title);
+    };
+
+    const handleCancelEdit = () => {
+        setEditingTaskId(null);
+        setEditingTitle('');
+    };
+
+    const handleUpdate = async (e) => {
+        e.preventDefault();
+        if (!editingTitle.trim() || !editingTaskId) return;
+        try {
+            await updateTask(editingTaskId, { title: editingTitle }, token);
+            setEditingTaskId(null);
+            setEditingTitle('');
             loadTasks();
         } catch (err) {
             setError('Error updating task');
@@ -109,23 +134,51 @@ export default function Dashboard() {
                                         key={task._id}
                                         className={`bg-white p-4 rounded-lg shadow-md flex items-center justify-between transition-all duration-300 ${task.completed ? 'opacity-50' : ''}`}
                                     >
-                                        <div className="flex items-center gap-4">
-                                            <input
-                                                type="checkbox"
-                                                checked={task.completed}
-                                                onChange={() => handleToggleComplete(task)}
-                                                className="w-6 h-6 text-yellow-500 bg-gray-100 border-gray-300 rounded focus:ring-yellow-500"
-                                            />
-                                            <span className={`text-lg ${task.completed ? 'line-through text-gray-500' : ''}`}>
-                                                {task.title}
-                                            </span>
-                                        </div>
-                                        <button
-                                            onClick={() => handleDelete(task._id)}
-                                            className="text-gray-400 hover:text-red-500 transition duration-300"
-                                        >
-                                            <FaTrash size={18} />
-                                        </button>
+                                        {editingTaskId === task._id ? (
+                                            <form onSubmit={handleUpdate} className="flex-1 flex items-center gap-4">
+                                                <input
+                                                    type="text"
+                                                    value={editingTitle}
+                                                    onChange={(e) => setEditingTitle(e.target.value)}
+                                                    className="flex-1 p-2 bg-gray-100 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                                                    autoFocus
+                                                />
+                                                <button type="submit" className="text-green-500 hover:text-green-600 transition duration-300">
+                                                    <FaSave size={18} />
+                                                </button>
+                                                <button type="button" onClick={handleCancelEdit} className="text-gray-400 hover:text-red-500 transition duration-300">
+                                                    <FaTimes size={18} />
+                                                </button>
+                                            </form>
+                                        ) : (
+                                            <>
+                                                <div className="flex items-center gap-4">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={task.completed}
+                                                        onChange={() => handleToggleComplete(task)}
+                                                        className="w-6 h-6 text-yellow-500 bg-gray-100 border-gray-300 rounded focus:ring-yellow-500"
+                                                    />
+                                                    <span className={`text-lg ${task.completed ? 'line-through text-gray-500' : ''}`}>
+                                                        {task.title}
+                                                    </span>
+                                                </div>
+                                                <div className="flex items-center gap-4">
+                                                    <button
+                                                        onClick={() => handleEdit(task)}
+                                                        className="text-gray-400 hover:text-yellow-500 transition duration-300"
+                                                    >
+                                                        <FaEdit size={18} />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDelete(task._id)}
+                                                        className="text-gray-400 hover:text-red-500 transition duration-300"
+                                                    >
+                                                        <FaTrash size={18} />
+                                                    </button>
+                                                </div>
+                                            </>
+                                        )}
                                     </div>
                                 ))
                             ) : (
