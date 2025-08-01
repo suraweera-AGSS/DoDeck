@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getTasks, createTask, deleteTask, updateTask } from '../services/task';
+import toast, { Toaster } from 'react-hot-toast';
 import { FaTrash, FaSignOutAlt, FaBars, FaUserCircle, FaEdit, FaSave, FaTimes } from 'react-icons/fa';
 import Button from '../components/Button';
 import Sidebar from '../components/Sidebar';
@@ -9,7 +10,6 @@ export default function Dashboard() {
     const [tasks, setTasks] = useState([]);
     const [title, setTitle] = useState('');
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [isExpanded, setIsExpanded] = useState(true);
     const [editingTaskId, setEditingTaskId] = useState(null);
@@ -22,7 +22,7 @@ export default function Dashboard() {
             const res = await getTasks(token);
             setTasks(res.data);
         } catch (err) {
-            setError('Failed to load tasks');
+            toast.error('Failed to load tasks');
         } finally {
             setLoading(false);
         }
@@ -31,30 +31,36 @@ export default function Dashboard() {
     const handleAdd = async (e) => {
         e.preventDefault();
         if (!title.trim()) return;
+        const toastId = toast.loading('Adding task...');
         try {
             await createTask({ title }, token);
             setTitle('');
             loadTasks();
+            toast.success('Task added successfully!', { id: toastId });
         } catch (err) {
-            setError('Error creating task');
+            toast.error('Error creating task', { id: toastId });
         }
     };
 
     const handleDelete = async (id) => {
+        const toastId = toast.loading('Deleting task...');
         try {
             await deleteTask(id, token);
             loadTasks();
+            toast.success('Task deleted successfully!', { id: toastId });
         } catch (err) {
-            setError('Error deleting task');
+            toast.error('Error deleting task', { id: toastId });
         }
     };
 
     const handleToggleComplete = async (task) => {
+        const toastId = toast.loading('Updating task...');
         try {
             await updateTask(task._id, { completed: !task.completed }, token);
             loadTasks();
+            toast.success('Task status updated!', { id: toastId });
         } catch (err) {
-            setError('Error updating task');
+            toast.error('Error updating task', { id: toastId });
         }
     };
 
@@ -71,13 +77,15 @@ export default function Dashboard() {
     const handleUpdate = async (e) => {
         e.preventDefault();
         if (!editingTitle.trim() || !editingTaskId) return;
+        const toastId = toast.loading('Saving task...');
         try {
             await updateTask(editingTaskId, { title: editingTitle }, token);
             setEditingTaskId(null);
             setEditingTitle('');
             loadTasks();
+            toast.success('Task updated successfully!', { id: toastId });
         } catch (err) {
-            setError('Error updating task');
+            toast.error('Error updating task', { id: toastId });
         }
     };
 
@@ -96,6 +104,28 @@ export default function Dashboard() {
 
     return (
         <div className="flex min-h-screen bg-gray-100">
+            <Toaster 
+                position="top-center"
+                reverseOrder={false}
+                toastOptions={{
+                    success: {
+                        style: {
+                            background: '#FFAB00',
+                            color: '#000',
+                        },
+                        iconTheme: {
+                            primary: '#000',
+                            secondary: '#FFAB00',
+                        },
+                    },
+                    error: {
+                        style: {
+                            background: '#EF4444',
+                            color: '#fff',
+                        },
+                    },
+                }}
+            />
             <Sidebar isOpen={sidebarOpen} isExpanded={isExpanded} setIsExpanded={setIsExpanded} handleLogout={handleLogout} />
             <div className="flex-1 flex flex-col transition-all duration-300 ease-in-out">
                 <header className="bg-white shadow-md p-4 flex justify-between items-center">
@@ -125,7 +155,6 @@ export default function Dashboard() {
                         </div>
 
                         {loading && <p className="text-center">Loading tasks...</p>}
-                        {error && <p className="text-red-500 text-center mb-4">{error}</p>}
 
                         <div className="space-y-4">
                             {tasks.length > 0 ? (
