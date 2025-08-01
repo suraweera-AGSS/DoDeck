@@ -7,10 +7,11 @@ import Sidebar from '../components/Sidebar';
 
 export default function Dashboard() {
     const [tasks, setTasks] = useState([]);
-    const [text, setText] = useState('');
+    const [title, setTitle] = useState('');
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [isExpanded, setIsExpanded] = useState(true);
     const token = localStorage.getItem('token');
     const navigate = useNavigate();
 
@@ -27,10 +28,10 @@ export default function Dashboard() {
 
     const handleAdd = async (e) => {
         e.preventDefault();
-        if (!text.trim()) return;
+        if (!title.trim()) return;
         try {
-            await createTask({ text }, token);
-            setText('');
+            await createTask({ title }, token);
+            setTitle('');
             loadTasks();
         } catch (err) {
             setError('Error creating task');
@@ -70,8 +71,8 @@ export default function Dashboard() {
 
     return (
         <div className="flex min-h-screen bg-gray-100">
-            <Sidebar isOpen={sidebarOpen} />
-            <div className="flex-1 flex flex-col">
+            <Sidebar isOpen={sidebarOpen} isExpanded={isExpanded} setIsExpanded={setIsExpanded} handleLogout={handleLogout} />
+            <div className="flex-1 flex flex-col transition-all duration-300 ease-in-out">
                 <header className="bg-white shadow-md p-4 flex justify-between items-center">
                     <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-gray-600 md:hidden">
                         <FaBars size={24} />
@@ -79,13 +80,6 @@ export default function Dashboard() {
                     <h1 className="text-2xl font-bold text-black ml-4">DoDeck</h1>
                     <div className="flex items-center gap-4">
                         <FaUserCircle size={32} className="text-gray-600" />
-                        <button
-                            onClick={handleLogout}
-                            className="flex items-center gap-2 text-gray-600 hover:text-red-500 transition-colors"
-                        >
-                            <FaSignOutAlt />
-                            <span className="hidden sm:inline">Sign out</span>
-                        </button>
                     </div>
                 </header>
 
@@ -94,8 +88,8 @@ export default function Dashboard() {
                         <div className="bg-white p-6 rounded-lg shadow-lg mb-8">
                             <form onSubmit={handleAdd} className="flex gap-4">
                                 <input
-                                    value={text}
-                                    onChange={(e) => setText(e.target.value)}
+                                    value={title}
+                                    onChange={(e) => setTitle(e.target.value)}
                                     className="flex-1 p-3 bg-gray-100 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-yellow-500"
                                     placeholder="What's your next task?"
                                 />
@@ -123,7 +117,7 @@ export default function Dashboard() {
                                                 className="w-6 h-6 text-yellow-500 bg-gray-100 border-gray-300 rounded focus:ring-yellow-500"
                                             />
                                             <span className={`text-lg ${task.completed ? 'line-through text-gray-500' : ''}`}>
-                                                {task.text}
+                                                {task.title}
                                             </span>
                                         </div>
                                         <button
