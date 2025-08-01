@@ -1,6 +1,6 @@
-import { FaInbox, FaStar, FaTasks, FaArchive, FaUserCircle, FaChevronLeft, FaChevronRight, FaSignOutAlt } from 'react-icons/fa';
+import { FaInbox, FaStar, FaTasks, FaArchive, FaUserCircle, FaChevronLeft, FaChevronRight, FaSignOutAlt, FaCheckCircle, FaTrash, FaClock } from 'react-icons/fa';
 
-export default function Sidebar({ isOpen, isExpanded, setIsExpanded, handleLogout }) {
+export default function Sidebar({ isOpen, isExpanded, setIsExpanded, handleLogout, user }) {
   const sidebarClasses = `bg-black text-white flex flex-col justify-between min-h-screen p-4 transform transition-all duration-300 ease-in-out ${isOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 md:relative ${isExpanded ? 'w-64' : 'w-20'}`;
 
   const linkClasses = "flex items-center p-2 text-base font-normal text-gray-300 rounded-lg hover:bg-yellow-500 hover:text-black group";
@@ -15,8 +15,7 @@ export default function Sidebar({ isOpen, isExpanded, setIsExpanded, handleLogou
             {isExpanded && <FaUserCircle size={40} className="mr-3 text-yellow-500" />}
             {isExpanded && (
               <div>
-                <p className="font-bold">User Name</p>
-                <p className="text-sm text-gray-400">user@email.com</p>
+                <p className="font-bold">{user?.loginId || 'User'}</p>
               </div>
             )}
           </div>
@@ -47,7 +46,25 @@ export default function Sidebar({ isOpen, isExpanded, setIsExpanded, handleLogou
             <li className="mb-4">
               <a href="#" className={`${linkClasses} ${!isExpanded && 'justify-center'}`}>
                 <FaArchive size={20} className={iconClasses} />
-                <span className={`${textClasses} ${!isExpanded && 'opacity-0'}`}>Archived</span>
+                <span className={`${textClasses} ${!isExpanded && 'opacity-0'}`}>Archived Tasks</span>
+              </a>
+            </li>
+            <li className="mb-4">
+              <a href="#" className={`${linkClasses} ${!isExpanded && 'justify-center'}`}>
+                <FaCheckCircle size={20} className={iconClasses} />
+                <span className={`${textClasses} ${!isExpanded && 'opacity-0'}`}>Completed Tasks</span>
+              </a>
+            </li>
+            <li className="mb-4">
+              <a href="#" className={`${linkClasses} ${!isExpanded && 'justify-center'}`}>
+                <FaClock size={20} className={iconClasses} />
+                <span className={`${textClasses} ${!isExpanded && 'opacity-0'}`}>Incomplete Tasks</span>
+              </a>
+            </li>
+            <li className="mb-4">
+              <a href="#" className={`${linkClasses} ${!isExpanded && 'justify-center'}`}>
+                <FaTrash size={20} className={iconClasses} />
+                <span className={`${textClasses} ${!isExpanded && 'opacity-0'}`}>Deleted Tasks</span>
               </a>
             </li>
           </ul>

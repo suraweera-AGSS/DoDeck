@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getTasks, createTask, deleteTask, updateTask } from '../services/task';
+import { getUser } from '../services/auth';
 import toast, { Toaster } from 'react-hot-toast';
 import { FaTrash, FaSignOutAlt, FaBars, FaUserCircle, FaEdit, FaPlus } from 'react-icons/fa';
 import ConfirmationModal from '../components/ConfirmationModal';
@@ -19,6 +20,7 @@ export default function Dashboard() {
     const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
     const [taskToDelete, setTaskToDelete] = useState(null);
     const token = localStorage.getItem('token');
+    const user = getUser();
     const navigate = useNavigate();
 
     const loadTasks = async () => {
@@ -167,7 +169,7 @@ export default function Dashboard() {
                     },
                 }}
             />
-            <Sidebar isOpen={sidebarOpen} isExpanded={isExpanded} setIsExpanded={setIsExpanded} handleLogout={handleLogout} />
+            <Sidebar isOpen={sidebarOpen} isExpanded={isExpanded} setIsExpanded={setIsExpanded} handleLogout={handleLogout} user={user} />
             <div className="flex-1 flex flex-col transition-all duration-300 ease-in-out">
                 <header className="bg-white shadow-md p-4 flex justify-between items-center">
                     <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-gray-600 md:hidden">

@@ -12,7 +12,7 @@ const Home = () => {
         {/* Hero Section */}
         <section className="bg-black text-white py-20 px-6">
           <div className="max-w-7xl mx-auto text-center">
-            <h1 className="text-5xl font-bold mb-6">Organize Your <span className="text-yellow-500">Work & Life</span></h1>
+            <h1 className="text-5xl font-bold mb-6">DECK<span className="text-yellow-500"> Your Life</span></h1>
             <p className="text-xl text-gray-300 max-w-3xl mx-auto mb-10">
               DoDeck helps you stay organized and focused on what matters most.
             </p>

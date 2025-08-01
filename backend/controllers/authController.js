@@ -8,9 +8,6 @@ const generateToken = (userId) => {
     });
 };
 
-// @desc    Register a new user
-// @route   POST /api/auth/register
-// @access  Public
 const register = async (req, res) => {
     try {
         const { loginId, password } = req.body;
