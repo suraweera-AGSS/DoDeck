@@ -4,6 +4,18 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 
 dotenv.config();
+
+// Check for required environment variables
+if (!process.env.JWT_SECRET) {
+    console.error('FATAL ERROR: JWT_SECRET is not defined.');
+    process.exit(1);
+}
+
+if (!process.env.MONGO_URI) {
+    console.error('FATAL ERROR: MONGO_URI is not defined.');
+    process.exit(1);
+}
+
 const app = express();
 
 app.use(cors());
@@ -14,7 +26,7 @@ app.get('/', (req, res) => {
 });
 
 // Routes
-app.use('/api', require('./routes/auth'));
+app.use('/api/auth', require('./routes/auth'));
 app.use('/api/tasks', require('./routes/tasks'));
 
 // DB Connect

@@ -184,7 +184,7 @@ export default function Dashboard() {
                         <div className="mb-8">
                             <Button onClick={openModalForCreate} variant="accent" className="w-full flex items-center justify-center gap-2">
                                 <FaPlus />
-                                Create New Task
+                                Create New Tasks
                             </Button>
                         </div>
 

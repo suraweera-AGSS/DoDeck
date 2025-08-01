@@ -1,54 +1,187 @@
 const User = require('../models/User');
-const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
-// REGISTER a new user
-exports.register = async (req, res) => {
+// Generate JWT Token
+const generateToken = (userId) => {
+    return jwt.sign({ userId }, process.env.JWT_SECRET, {
+        expiresIn: '7d'
+    });
+};
+
+// @desc    Register a new user
+// @route   POST /api/auth/register
+// @access  Public
+const register = async (req, res) => {
     try {
         const { loginId, password } = req.body;
 
-        // Check if user already exists
-        const existingUser = await User.findOne({ loginId });
-        if (existingUser) {
-            return res.status(400).json({ message: 'User already exists' });
+        // Validation
+        if (!loginId || !password) {
+            return res.status(400).json({
+                success: false,
+                message: 'Please provide login ID and password'
+            });
         }
 
-        // Hash password
-        const hashedPassword = await bcrypt.hash(password, 10);
+        if (loginId.trim().length < 3) {
+            return res.status(400).json({
+                success: false,
+                message: 'Login ID must be at least 3 characters long'
+            });
+        }
 
-        // Create and save new user
-        const newUser = new User({ loginId, password: hashedPassword });
-        await newUser.save();
+        if (password.length < 6) {
+            return res.status(400).json({
+                success: false,
+                message: 'Password must be at least 6 characters long'
+            });
+        }
 
-        res.status(201).json({ message: 'User registered successfully' });
+        // Check if user already exists
+        const existingUser = await User.findOne({ loginId: loginId.trim().toLowerCase() });
+        if (existingUser) {
+            return res.status(400).json({
+                success: false,
+                message: 'User with this login ID already exists'
+            });
+        }
 
-    } catch (err) {
-        res.status(500).json({ message: 'Server error', error: err.message });
+        // Create user
+        const user = await User.create({
+            loginId: loginId.trim().toLowerCase(),
+            password
+        });
+
+        // Generate token
+        const token = generateToken(user._id);
+
+        res.status(201).json({
+            success: true,
+            message: 'User registered successfully',
+            token,
+            user: {
+                id: user._id,
+                loginId: user.loginId,
+                createdAt: user.createdAt
+            }
+        });
+
+    } catch (error) {
+        console.error('Registration error:', error);
+        
+        // Handle duplicate key error
+        if (error.code === 11000) {
+            return res.status(400).json({
+                success: false,
+                message: 'User with this login ID already exists'
+            });
+        }
+
+        // Handle validation errors
+        if (error.name === 'ValidationError') {
+            const messages = Object.values(error.errors).map(err => err.message);
+            return res.status(400).json({
+                success: false,
+                message: messages[0]
+            });
+        }
+
+        res.status(500).json({
+            success: false,
+            message: 'Server error during registration'
+        });
     }
 };
 
-// LOGIN a user
-exports.login = async (req, res) => {
+// @desc    Login user
+// @route   POST /api/auth/login
+// @access  Public
+const login = async (req, res) => {
     try {
         const { loginId, password } = req.body;
 
-        // Find user by loginId
-        const user = await User.findOne({ loginId });
+        // Validation
+        if (!loginId || !password) {
+            return res.status(400).json({
+                success: false,
+                message: 'Please provide login ID and password'
+            });
+        }
+
+        // Find user
+        const user = await User.findOne({ loginId: loginId.trim().toLowerCase() }).select('+password');
         if (!user) {
-            return res.status(400).json({ message: 'User not found' });
+            return res.status(401).json({
+                success: false,
+                message: 'Invalid login credentials'
+            });
         }
 
-        // Compare hashed password
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) {
-            return res.status(400).json({ message: 'Invalid password' });
+        // Check password
+        const isPasswordValid = await user.comparePassword(password);
+        if (!isPasswordValid) {
+            return res.status(401).json({
+                success: false,
+                message: 'Invalid login credentials'
+            });
         }
 
-        // Create JWT token
-        const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '2h' });
+        // Generate token
+        const token = generateToken(user._id);
 
-        res.status(200).json({ message: 'Login successful', token, userId: user._id });
-    } catch (err) {
-        res.status(500).json({ message: 'Server error', error: err.message });
+        res.status(200).json({
+            success: true,
+            message: 'Login successful',
+            token,
+            user: {
+                id: user._id,
+                loginId: user.loginId,
+                createdAt: user.createdAt
+            }
+        });
+
+    } catch (error) {
+        console.error('Login error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Server error during login'
+        });
     }
+};
+
+// @desc    Get current user
+// @route   GET /api/auth/me
+// @access  Private
+const getMe = async (req, res) => {
+    try {
+        const user = await User.findById(req.user.userId);
+        
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found'
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            user: {
+                id: user._id,
+                loginId: user.loginId,
+                createdAt: user.createdAt
+            }
+        });
+    } catch (error) {
+        console.error('Get user error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Server error'
+        });
+    }
+};
+
+module.exports = {
+    register,
+    login,
+    getMe
 };
