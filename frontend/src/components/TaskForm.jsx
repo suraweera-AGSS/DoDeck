@@ -79,7 +79,7 @@ const TaskForm = ({ task, setTask, handleSubmit, closeModal }) => {
                     id="description"
                     value={task.description || ''}
                     onChange={handleChange}
-                    rows={4}
+                    rows={2}
                     className="mt-1 block w-full p-3 bg-gray-100 rounded-md border-gray-300 shadow-sm focus:border-yellow-500 focus:ring-yellow-500 sm:text-sm"
                 />
             </div>
@@ -128,18 +128,18 @@ const TaskForm = ({ task, setTask, handleSubmit, closeModal }) => {
                     <select
                         name="status"
                         id="status"
-                        value={task.status || 'To do'}
+                        value={task.status || 'To Do'}
                         onChange={handleChange}
                         disabled={!isEditing}
                         className={`mt-1 block w-full p-3 bg-gray-100 rounded-md border-gray-300 shadow-sm focus:border-yellow-500 focus:ring-yellow-500 sm:text-sm ${errors.status ? 'border-red-500' : ''} ${!isEditing ? 'opacity-50 cursor-not-allowed' : ''}`}
                         required
                     >
-                        <option value="To do">To do</option>
+                        <option value="To Do">To Do</option>
                         <option value="In Progress">In Progress</option>
                         <option value="Completed">Completed</option>
                     </select>
                     {errors.status && <p className="mt-1 text-sm text-red-600">{errors.status}</p>}
-                    {!isEditing && <p className="mt-1 text-sm text-gray-500">Status is set to "To do" for new tasks</p>}
+                    {!isEditing && <p className="mt-1 text-sm text-gray-500">Status is set to "To Do" for new tasks</p>}
                 </div>
                 <div>
                     <label htmlFor="dueDate" className="block text-sm font-medium text-gray-700">Due Date</label>
@@ -151,6 +151,7 @@ const TaskForm = ({ task, setTask, handleSubmit, closeModal }) => {
                         onChange={handleChange}
                         min={today}
                         className={`mt-1 block w-full p-3 bg-gray-100 rounded-md border-gray-300 shadow-sm focus:border-yellow-500 focus:ring-yellow-500 sm:text-sm ${errors.dueDate ? 'border-red-500' : ''}`}
+                        required
                     />
                     {errors.dueDate && <p className="mt-1 text-sm text-red-600">{errors.dueDate}</p>}
                 </div>
