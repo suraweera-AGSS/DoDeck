@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { getTasks, createTask, deleteTask, updateTask } from '../services/task';
 import toast, { Toaster } from 'react-hot-toast';
 import { FaTrash, FaSignOutAlt, FaBars, FaUserCircle, FaEdit, FaPlus } from 'react-icons/fa';
+import ConfirmationModal from '../components/ConfirmationModal';
 import Button from '../components/Button';
 import Sidebar from '../components/Sidebar';
 import TaskModal from '../components/TaskModal';
@@ -15,6 +16,8 @@ export default function Dashboard() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [currentTask, setCurrentTask] = useState(null);
     const [isEditing, setIsEditing] = useState(false);
+    const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+    const [taskToDelete, setTaskToDelete] = useState(null);
     const token = localStorage.getItem('token');
     const navigate = useNavigate();
 
@@ -31,7 +34,12 @@ export default function Dashboard() {
 
     
 
-    const handleDelete = async (id) => {
+        const handleConfirmDelete = async () => {
+        if (!taskToDelete) return;
+
+        const id = taskToDelete;
+        setTaskToDelete(null);
+        setIsConfirmModalOpen(false);
         const toastId = toast.loading('Deleting task...');
         try {
             await deleteTask(id, token);
@@ -57,9 +65,26 @@ export default function Dashboard() {
     
 
     const openModalForCreate = () => {
-        setCurrentTask({ title: '', description: '', priority: 'medium', category: 'general', status: 'pending', dueDate: '' });
+        setCurrentTask({
+            title: '',
+            description: '',
+            priority: 'Medium',
+            category: 'Work',
+            status: 'To do',
+            dueDate: ''
+        });
         setIsEditing(false);
         setIsModalOpen(true);
+    };
+
+    const openConfirmModal = (id) => {
+        setTaskToDelete(id);
+        setIsConfirmModalOpen(true);
+    };
+
+    const closeConfirmModal = () => {
+        setTaskToDelete(null);
+        setIsConfirmModalOpen(false);
     };
 
     const openModalForEdit = (task) => {
@@ -105,6 +130,13 @@ export default function Dashboard() {
 
     return (
         <div className="flex min-h-screen bg-gray-100">
+            <ConfirmationModal 
+                isOpen={isConfirmModalOpen}
+                onClose={closeConfirmModal}
+                onConfirm={handleConfirmDelete}
+                title="Delete Task?"
+                message="Are you sure you want to delete this task? This action cannot be undone."
+            />
             <TaskModal 
                 isOpen={isModalOpen} 
                 closeModal={closeModal} 
@@ -184,7 +216,7 @@ export default function Dashboard() {
                                             </div>
                                             <div className="flex items-center gap-3">
                                                 <button onClick={() => openModalForEdit(task)} className="text-gray-400 hover:text-yellow-500 transition-colors"><FaEdit size={18} /></button>
-                                                <button onClick={() => handleDelete(task._id)} className="text-gray-400 hover:text-red-500 transition-colors"><FaTrash size={18} /></button>
+                                                <button onClick={() => openConfirmModal(task._id)} className="text-gray-400 hover:text-red-500 transition-colors"><FaTrash size={18} /></button>
                                             </div>
                                         </div>
                                     </div>

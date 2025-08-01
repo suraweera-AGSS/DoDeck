@@ -49,14 +49,22 @@ const TaskForm = ({ task, setTask, handleSubmit, closeModal }) => {
                 </div>
                 <div>
                     <label htmlFor="category" className="block text-sm font-medium text-gray-700">Category</label>
-                    <input
-                        type="text"
+                    <select
                         name="category"
                         id="category"
-                        value={task.category || 'General'}
+                        value={task.category || 'Work'}
                         onChange={handleChange}
                         className="mt-1 block w-full p-3 bg-gray-100 rounded-md border-gray-300 shadow-sm focus:border-yellow-500 focus:ring-yellow-500 sm:text-sm"
-                    />
+                    >
+                        <option value="Work">Work</option>
+                        <option value="Personal">Personal</option>
+                        <option value="Shopping">Shopping</option>
+                        <option value="Health & Fitness">Health & Fitness</option>
+                        <option value="Home">Home</option>
+                        <option value="Finance">Finance</option>
+                        <option value="Education">Education</option>
+                        <option value="Social">Social</option>
+                    </select>
                 </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

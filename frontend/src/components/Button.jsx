@@ -16,6 +16,7 @@ const Button = ({
     outline: 'border border-gray-400 bg-white text-black hover:bg-gray-50 focus:ring-gray-400',
     'outline-dark': 'border border-white bg-transparent text-white hover:bg-white hover:text-black focus:ring-gray-400',
     accent: 'bg-yellow-500 text-black hover:bg-yellow-600 focus:ring-yellow-400',
+    danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500',
   };
 
   return (
