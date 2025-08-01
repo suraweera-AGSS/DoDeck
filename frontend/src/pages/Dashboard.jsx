@@ -2,18 +2,19 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getTasks, createTask, deleteTask, updateTask } from '../services/task';
 import toast, { Toaster } from 'react-hot-toast';
-import { FaTrash, FaSignOutAlt, FaBars, FaUserCircle, FaEdit, FaSave, FaTimes } from 'react-icons/fa';
+import { FaTrash, FaSignOutAlt, FaBars, FaUserCircle, FaEdit, FaPlus } from 'react-icons/fa';
 import Button from '../components/Button';
 import Sidebar from '../components/Sidebar';
+import TaskModal from '../components/TaskModal';
 
 export default function Dashboard() {
     const [tasks, setTasks] = useState([]);
-    const [title, setTitle] = useState('');
     const [loading, setLoading] = useState(true);
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [isExpanded, setIsExpanded] = useState(true);
-    const [editingTaskId, setEditingTaskId] = useState(null);
-    const [editingTitle, setEditingTitle] = useState('');
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [currentTask, setCurrentTask] = useState(null);
+    const [isEditing, setIsEditing] = useState(false);
     const token = localStorage.getItem('token');
     const navigate = useNavigate();
 
@@ -28,19 +29,7 @@ export default function Dashboard() {
         }
     };
 
-    const handleAdd = async (e) => {
-        e.preventDefault();
-        if (!title.trim()) return;
-        const toastId = toast.loading('Adding task...');
-        try {
-            await createTask({ title }, token);
-            setTitle('');
-            loadTasks();
-            toast.success('Task added successfully!', { id: toastId });
-        } catch (err) {
-            toast.error('Error creating task', { id: toastId });
-        }
-    };
+    
 
     const handleDelete = async (id) => {
         const toastId = toast.loading('Deleting task...');
@@ -54,9 +43,10 @@ export default function Dashboard() {
     };
 
     const handleToggleComplete = async (task) => {
-        const toastId = toast.loading('Updating task...');
+        const newStatus = task.status === 'Completed' ? 'To do' : 'Completed';
+        const toastId = toast.loading('Updating task status...');
         try {
-            await updateTask(task._id, { completed: !task.completed }, token);
+            await updateTask(task._id, { status: newStatus }, token);
             loadTasks();
             toast.success('Task status updated!', { id: toastId });
         } catch (err) {
@@ -64,28 +54,39 @@ export default function Dashboard() {
         }
     };
 
-    const handleEdit = (task) => {
-        setEditingTaskId(task._id);
-        setEditingTitle(task.title);
+    
+
+    const openModalForCreate = () => {
+        setCurrentTask({ title: '', description: '', priority: 'medium', category: 'general', status: 'pending', dueDate: '' });
+        setIsEditing(false);
+        setIsModalOpen(true);
     };
 
-    const handleCancelEdit = () => {
-        setEditingTaskId(null);
-        setEditingTitle('');
+    const openModalForEdit = (task) => {
+        setCurrentTask(task);
+        setIsEditing(true);
+        setIsModalOpen(true);
     };
 
-    const handleUpdate = async (e) => {
+    const closeModal = () => {
+        setIsModalOpen(false);
+        setCurrentTask(null);
+    };
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!editingTitle.trim() || !editingTaskId) return;
-        const toastId = toast.loading('Saving task...');
+        const toastId = toast.loading(isEditing ? 'Updating task...' : 'Creating task...');
         try {
-            await updateTask(editingTaskId, { title: editingTitle }, token);
-            setEditingTaskId(null);
-            setEditingTitle('');
+            if (isEditing) {
+                await updateTask(currentTask._id, currentTask, token);
+            } else {
+                await createTask(currentTask, token);
+            }
             loadTasks();
-            toast.success('Task updated successfully!', { id: toastId });
+            closeModal();
+            toast.success(isEditing ? 'Task updated successfully!' : 'Task created successfully!', { id: toastId });
         } catch (err) {
-            toast.error('Error updating task', { id: toastId });
+            toast.error(isEditing ? 'Error updating task' : 'Error creating task', { id: toastId });
         }
     };
 
@@ -104,6 +105,14 @@ export default function Dashboard() {
 
     return (
         <div className="flex min-h-screen bg-gray-100">
+            <TaskModal 
+                isOpen={isModalOpen} 
+                closeModal={closeModal} 
+                task={currentTask} 
+                setTask={setCurrentTask} 
+                handleSubmit={handleSubmit} 
+                isEditing={isEditing} 
+            />
             <Toaster 
                 position="top-center"
                 reverseOrder={false}
@@ -140,74 +149,44 @@ export default function Dashboard() {
 
                 <main className="flex-1 p-4 sm:p-6 lg:p-8">
                     <div className="max-w-4xl mx-auto">
-                        <div className="bg-white p-6 rounded-lg shadow-lg mb-8">
-                            <form onSubmit={handleAdd} className="flex gap-4">
-                                <input
-                                    value={title}
-                                    onChange={(e) => setTitle(e.target.value)}
-                                    className="flex-1 p-3 bg-gray-100 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-yellow-500"
-                                    placeholder="What's your next task?"
-                                />
-                                <Button type="submit" variant="accent">
-                                    Add Task
-                                </Button>
-                            </form>
+                        <div className="mb-8">
+                            <Button onClick={openModalForCreate} variant="accent" className="w-full flex items-center justify-center gap-2">
+                                <FaPlus />
+                                Create New Task
+                            </Button>
                         </div>
 
-                        {loading && <p className="text-center">Loading tasks...</p>}
+                        
 
                         <div className="space-y-4">
                             {tasks.length > 0 ? (
                                 tasks.map((task) => (
-                                    <div
-                                        key={task._id}
-                                        className={`bg-white p-4 rounded-lg shadow-md flex items-center justify-between transition-all duration-300 ${task.completed ? 'opacity-50' : ''}`}
-                                    >
-                                        {editingTaskId === task._id ? (
-                                            <form onSubmit={handleUpdate} className="flex-1 flex items-center gap-4">
-                                                <input
-                                                    type="text"
-                                                    value={editingTitle}
-                                                    onChange={(e) => setEditingTitle(e.target.value)}
-                                                    className="flex-1 p-2 bg-gray-100 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-yellow-500"
-                                                    autoFocus
-                                                />
-                                                <button type="submit" className="text-green-500 hover:text-green-600 transition duration-300">
-                                                    <FaSave size={18} />
-                                                </button>
-                                                <button type="button" onClick={handleCancelEdit} className="text-gray-400 hover:text-red-500 transition duration-300">
-                                                    <FaTimes size={18} />
-                                                </button>
-                                            </form>
-                                        ) : (
-                                            <>
-                                                <div className="flex items-center gap-4">
+                                    <div key={task._id} className={`bg-white p-5 rounded-lg shadow-md transition-all duration-300 ${task.status === 'Completed' ? 'opacity-60' : ''}`}>
+                                        <div className="flex items-start justify-between">
+                                            <div className="flex-1">
+                                                <div className="flex items-center gap-3">
                                                     <input
                                                         type="checkbox"
-                                                        checked={task.completed}
+                                                        checked={task.status === 'Completed'}
                                                         onChange={() => handleToggleComplete(task)}
-                                                        className="w-6 h-6 text-yellow-500 bg-gray-100 border-gray-300 rounded focus:ring-yellow-500"
+                                                        className="w-5 h-5 text-yellow-500 bg-gray-100 border-gray-300 rounded focus:ring-yellow-500 cursor-pointer"
                                                     />
-                                                    <span className={`text-lg ${task.completed ? 'line-through text-gray-500' : ''}`}>
-                                                        {task.title}
+                                                    <h3 className={`text-xl font-bold ${task.status === 'Completed' ? 'line-through text-gray-500' : 'text-gray-800'}`}>{task.title}</h3>
+                                                </div>
+                                                <p className="text-gray-600 mt-2 ml-8">{task.description}</p>
+                                                <div className="flex items-center flex-wrap gap-4 mt-3 ml-8 text-sm">
+                                                    <span className={`px-3 py-1 rounded-full font-semibold text-xs ${task.priority === 'High' ? 'bg-red-100 text-red-700' : task.priority === 'Medium' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'}`}>
+                                                        {task.priority}
                                                     </span>
+                                                    <span className="text-gray-500 font-medium bg-gray-100 px-3 py-1 rounded-full text-xs">{task.category}</span>
+                                                    {task.dueDate && <span className="text-gray-500 font-medium">Due: {new Date(task.dueDate).toLocaleDateString()}</span>}
                                                 </div>
-                                                <div className="flex items-center gap-4">
-                                                    <button
-                                                        onClick={() => handleEdit(task)}
-                                                        className="text-gray-400 hover:text-yellow-500 transition duration-300"
-                                                    >
-                                                        <FaEdit size={18} />
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleDelete(task._id)}
-                                                        className="text-gray-400 hover:text-red-500 transition duration-300"
-                                                    >
-                                                        <FaTrash size={18} />
-                                                    </button>
-                                                </div>
-                                            </>
-                                        )}
+                                            </div>
+                                            <div className="flex items-center gap-3">
+                                                <button onClick={() => openModalForEdit(task)} className="text-gray-400 hover:text-yellow-500 transition-colors"><FaEdit size={18} /></button>
+                                                <button onClick={() => handleDelete(task._id)} className="text-gray-400 hover:text-red-500 transition-colors"><FaTrash size={18} /></button>
+                                            </div>
+                                        </div>
                                     </div>
                                 ))
                             ) : (
