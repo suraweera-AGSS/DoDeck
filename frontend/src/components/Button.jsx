@@ -8,7 +8,7 @@ const Button = ({
   className = '',
   ...props 
 }) => {
-  const baseStyles = 'px-6 py-3 rounded-md font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2';
+  const baseStyles = 'px-12 py-3 rounded-md font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2';
   
   const variants = {
     primary: 'bg-black text-white hover:bg-gray-800 focus:ring-gray-600',
