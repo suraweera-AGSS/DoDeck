@@ -90,9 +90,6 @@ const register = async (req, res) => {
     }
 };
 
-// @desc    Login user
-// @route   POST /api/auth/login
-// @access  Public
 const login = async (req, res) => {
     try {
         const { loginId, password } = req.body;
@@ -146,9 +143,6 @@ const login = async (req, res) => {
     }
 };
 
-// @desc    Get current user
-// @route   GET /api/auth/me
-// @access  Private
 const getMe = async (req, res) => {
     try {
         const user = await User.findById(req.user.userId);
