@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { FaGithub, FaTwitter, FaLinkedin, FaInstagram } from 'react-icons/fa';
 
 const socialLinks = [
-  { url: 'https://github.com', icon: <FaGithub size={20} /> },
+  { url: 'https://github.com/suraweera-AGSS', icon: <FaGithub size={20} /> },
   { url: 'https://twitter.com', icon: <FaTwitter size={20} /> },
   { url: 'https://linkedin.com', icon: <FaLinkedin size={20} /> },
   { url: 'https://instagram.com', icon: <FaInstagram size={20} /> },

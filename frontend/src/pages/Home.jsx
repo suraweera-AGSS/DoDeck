@@ -3,6 +3,7 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import Button from '../components/Button';
 import { Link } from 'react-router-dom';
+import { FaTasks, FaUsers, FaChartLine, FaCalendarAlt, FaBell, FaShieldAlt, FaMobileAlt, FaSync } from 'react-icons/fa';
 
 const Home = () => {
   return (
@@ -36,30 +37,60 @@ const Home = () => {
           </div>
         </section>
 
-        {/* Features Section */}
-        <section id="features" className="py-16 px-6 bg-gray-50">
+        {/* Enhanced Enterprise Features Section */}
+        <section id="features" className="py-24 px-6 bg-gradient-to-br from-gray-50 to-gray-100">
           <div className="max-w-7xl mx-auto">
-            <h3 className="text-3xl font-bold text-center mb-12 text-black">Features</h3>
-            <div className="grid md:grid-cols-3 gap-8">
+            <div className="text-center max-w-3xl mx-auto mb-16">
+              <h2 className="text-4xl font-bold text-black mb-4">Enterprise-Grade Productivity</h2>
+              <p className="text-xl text-gray-600">Powerful features designed for teams and businesses of all sizes</p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
               {[
                 {
-                  title: 'Task Management',
-                  description: 'Easily create, organize, and prioritize your tasks.'
+                  icon: <FaTasks className="text-yellow-500 text-3xl" />,
+                  title: 'Advanced Task Management',
+                  description: 'Create, assign, and track tasks with custom workflows, dependencies, and automation.'
                 },
                 {
-                  title: 'Collaboration',
-                  description: 'Share tasks and projects with your team members.'
+                  icon: <FaUsers className="text-yellow-500 text-3xl" />,
+                  title: 'Team Collaboration',
+                  description: 'Real-time collaboration with role-based permissions, comments, and mentions.'
                 },
                 {
-                  title: 'Analytics',
-                  description: 'Track your productivity with detailed insights.'
-                }
+                  icon: <FaChartLine className="text-yellow-500 text-3xl" />,
+                  title: 'Performance Analytics',
+                  description: 'Track team productivity with custom reports and data-driven insights.'
+                },
+                {
+                  icon: <FaCalendarAlt className="text-yellow-500 text-3xl" />,
+                  title: 'Smart Scheduling',
+                  description: 'Automated resource allocation and calendar integration for optimal planning.'
+                },
+
               ].map((feature, index) => (
-                <div key={index} className="bg-white p-8 rounded-lg shadow-md">
-                  <h3 className="text-xl font-semibold mb-4 text-black">{feature.title}</h3>
+                <div 
+                  key={index} 
+                  className="bg-white p-8 rounded-xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
+                >
+                  <div className="mb-5 text-yellow-500">
+                    {feature.icon}
+                  </div>
+                  <h3 className="text-xl font-bold mb-3 text-gray-800">{feature.title}</h3>
                   <p className="text-gray-600">{feature.description}</p>
                 </div>
               ))}
+            </div>
+            
+            <div className="mt-16 text-center">
+              <div className="inline-flex items-center bg-black rounded-full px-6 py-3">
+                <span className="text-white mr-3 font-medium">Ready to transform your workflow?</span>
+                <Link to="/register">
+                  <Button variant="accent" className="rounded-full">
+                    Start Free Trial
+                  </Button>
+                </Link>
+              </div>
             </div>
           </div>
         </section>

@@ -249,7 +249,13 @@ export default function Dashboard() {
                         <div className="bg-white p-6 rounded-2xl shadow-md flex items-center justify-between">
                             <div>
                                 <p className="text-gray-500">Overdue</p>
-                                <p className="text-3xl font-bold text-red-500">{tasks.filter(t => t.dueDate && new Date(t.dueDate) < new Date()).length}</p>
+                                <p className="text-3xl font-bold text-red-500">{
+                                    tasks.filter(t => 
+                                        t.dueDate && 
+                                        new Date(t.dueDate) < new Date() && 
+                                        t.status !== 'Completed'
+                                    ).length
+                                }</p>
                             </div>
                         </div>
                     </div>
