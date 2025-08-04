@@ -4,6 +4,7 @@ import Footer from '../components/Footer';
 import Button from '../components/Button';
 import { Link } from 'react-router-dom';
 import { FaTasks, FaUsers, FaChartLine, FaCalendarAlt, FaBell, FaShieldAlt, FaMobileAlt, FaSync } from 'react-icons/fa';
+import aboutImage from '../assets/Pic3.png';
 
 const Home = () => {
   return (
@@ -115,7 +116,7 @@ const Home = () => {
               </div>
               <div className="md:w-1/2 flex justify-center">
                 <img 
-                  src="/src/assets/Pic3.png" 
+                  src={aboutImage}
                   alt="Task Management with DoDeck" 
                   className="max-w-full h-auto"
                 />

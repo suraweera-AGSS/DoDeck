@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { FaGithub, FaTwitter, FaLinkedin, FaInstagram } from 'react-icons/fa';
+import logo from '../assets/Pic6.png';
 
 const socialLinks = [
   { url: 'https://github.com/suraweera-AGSS', icon: <FaGithub size={20} /> },
@@ -17,7 +18,7 @@ const Footer = () => {
         <div className="space-y-4 md:pr-10">
           <div className="mb-4">
             <img
-              src="/src/assets/Pic6.png"
+              src={logo}
               alt="DoDeck Logo"
               className="h-24 w-auto object-contain"
             />

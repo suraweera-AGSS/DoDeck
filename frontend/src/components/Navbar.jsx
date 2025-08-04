@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import Button from './Button';
+import logo from '../assets/Pic5.png';
 
 const Navbar = () => {
   const navigate = useNavigate();
@@ -42,7 +43,7 @@ const Navbar = () => {
             }}
           >
             <img 
-              src="/src/assets/Pic5.png" 
+              src={logo} 
               alt="DoDeck Logo" 
               className="h-5 w-auto object-contain"
             />
