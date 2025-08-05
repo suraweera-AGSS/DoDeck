@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const API = 'http://localhost:5000/api/tasks';
+// const API = 'http://localhost:5000/api/tasks'; // Static base URL(In development)
+const API = `${import.meta.env.VITE_API_BASE_URL}/api/tasks`;  // Dynamic base URL (In production)
 
 export const getTasks = (token) =>
     axios.get(API, {
