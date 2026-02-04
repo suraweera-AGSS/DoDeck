@@ -29,10 +29,13 @@ export default function Dashboard() {
     const loadTasks = async () => {
         try {
             const res = await getTasks(token);
-            setTasks(res.data);
-            applyFilter(res.data, currentFilter);
+            // Ensure tasks is always an array, even if API returns null/undefined
+            const tasksData = Array.isArray(res.data) ? res.data : [];
+            setTasks(tasksData);
+            applyFilter(tasksData, currentFilter);
         } catch (err) {
             toast.error('Failed to load tasks');
+            setTasks([]); // Set empty array on error to prevent crashes
         } finally {
             setLoading(false);
         }
@@ -189,7 +192,7 @@ export default function Dashboard() {
 
     return (
         <div className="flex min-h-screen bg-gray-100">
-            <Toaster 
+            <Toaster
                 position="top-center"
                 toastOptions={{
                     style: {
@@ -199,7 +202,7 @@ export default function Dashboard() {
                     },
                 }}
             />
-            <Sidebar 
+            <Sidebar
                 isOpen={sidebarOpen}
                 isExpanded={isExpanded}
                 setIsExpanded={setIsExpanded}
@@ -250,9 +253,9 @@ export default function Dashboard() {
                             <div>
                                 <p className="text-gray-500">Overdue</p>
                                 <p className="text-3xl font-bold text-red-500">{
-                                    tasks.filter(t => 
-                                        t.dueDate && 
-                                        new Date(t.dueDate) < new Date() && 
+                                    tasks.filter(t =>
+                                        t.dueDate &&
+                                        new Date(t.dueDate) < new Date() &&
                                         t.status !== 'Completed'
                                     ).length
                                 }</p>
@@ -326,9 +329,9 @@ export default function Dashboard() {
                                         {currentFilter.type}: {currentFilter.value}
                                     </span>
                                 </div>
-                                <Button 
-                                    onClick={clearFilter} 
-                                    variant="secondary" 
+                                <Button
+                                    onClick={clearFilter}
+                                    variant="secondary"
                                     className="text-sm"
                                 >
                                     Clear All Filters
