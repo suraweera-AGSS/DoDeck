@@ -43,3 +43,101 @@
 .animate-scaleIn {
     animation: scaleIn 0.3s ease-out;
 }
+
+/* Tutorial Animations */
+@keyframes spotlightRing {
+
+    0%,
+    100% {
+        box-shadow: 0 0 0 0 rgba(234, 179, 8, 0.7),
+            0 0 0 8px rgba(234, 179, 8, 0.5),
+            0 0 0 16px rgba(234, 179, 8, 0.3);
+    }
+
+    50% {
+        box-shadow: 0 0 0 8px rgba(234, 179, 8, 0.5),
+            0 0 0 16px rgba(234, 179, 8, 0.3),
+            0 0 0 24px rgba(234, 179, 8, 0.1);
+    }
+}
+
+@keyframes pulseHighlight {
+
+    0%,
+    100% {
+        opacity: 0.3;
+    }
+
+    50% {
+        opacity: 0.6;
+    }
+}
+
+@keyframes slideInDialog {
+    from {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes slideOutDialog {
+    from {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+
+    to {
+        opacity: 0;
+        transform: translateY(20px) scale(0.95);
+    }
+}
+
+@keyframes blink {
+
+    0%,
+    50%,
+    100% {
+        opacity: 1;
+    }
+
+    25%,
+    75% {
+        opacity: 0.3;
+    }
+}
+
+/* Apply animations */
+.fadeIn {
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+.scaleIn {
+    animation: scaleIn 0.3s ease-out;
+}
+
+.spotlight-ring {
+    border-radius: 8px;
+    animation: spotlightRing 2s infinite;
+    pointer-events: none;
+}
+
+.pulse-highlight {
+    animation: pulseHighlight 2s infinite;
+}
+
+.tutorial-dialog.slideIn {
+    animation: slideInDialog 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.tutorial-dialog.slideOut {
+    animation: slideOutDialog 0.3s ease-in;
+}
+
+.blink-effect {
+    animation: blink 2s infinite;
+}

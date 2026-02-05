@@ -3,11 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { getTasks, createTask, deleteTask, updateTask } from '../services/task';
 import { getUser } from '../services/auth';
 import toast, { Toaster } from 'react-hot-toast';
-import { FaTrash, FaSignOutAlt, FaBars, FaUserCircle, FaEdit, FaPlus, FaSearch } from 'react-icons/fa';
+import { FaTrash, FaSignOutAlt, FaBars, FaUserCircle, FaEdit, FaPlus, FaSearch, FaQuestionCircle } from 'react-icons/fa';
 import ConfirmationModal from '../components/ConfirmationModal';
 import Button from '../components/Button';
 import Sidebar from '../components/Sidebar';
 import TaskModal from '../components/TaskModal';
+import Calendar from '../components/Calendar';
+import TutorialGuide from '../components/TutorialGuide';
 
 export default function Dashboard() {
     const [tasks, setTasks] = useState([]);
@@ -22,6 +24,9 @@ export default function Dashboard() {
     const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
     const [taskToDelete, setTaskToDelete] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
+    const [isCalendarExpanded, setIsCalendarExpanded] = useState(false);
+    const [quickAccessFilter, setQuickAccessFilter] = useState(null);
+    const [showTutorial, setShowTutorial] = useState(false);
     const token = localStorage.getItem('token');
     const user = getUser();
     const navigate = useNavigate();
@@ -41,9 +46,21 @@ export default function Dashboard() {
         }
     };
 
-    const applyFilter = (taskList, filter, query) => {
+    // Auto-start tutorial for new users
+    useEffect(() => {
+        const tutorialCompleted = localStorage.getItem('tutorialCompleted');
+        if (!tutorialCompleted && !loading && tasks.length >= 0) {
+            // Delay to let the page fully render
+            setTimeout(() => {
+                setShowTutorial(true);
+            }, 1000);
+        }
+    }, [loading, tasks]);
+
+    const applyFilter = (taskList, filter, query, quickFilter = null) => {
         let filtered = taskList;
 
+        // Apply search query
         if (query) {
             filtered = filtered.filter(task =>
                 task.title.toLowerCase().includes(query.toLowerCase()) ||
@@ -51,7 +68,53 @@ export default function Dashboard() {
             );
         }
 
-        if (filter) {
+        // Apply quick access filters (Today, Important, Upcoming)
+        if (quickFilter) {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            switch (quickFilter) {
+                case 'today':
+                    filtered = filtered.filter(task => {
+                        if (!task.dueDate) return false;
+                        const taskDate = new Date(task.dueDate);
+                        taskDate.setHours(0, 0, 0, 0);
+                        return taskDate.getTime() === today.getTime();
+                    });
+                    break;
+                case 'important':
+                    filtered = filtered.filter(task => task.priority === 'High');
+                    break;
+                case 'upcoming':
+                    const nextWeek = new Date();
+                    nextWeek.setDate(nextWeek.getDate() + 7);
+                    nextWeek.setHours(23, 59, 59, 999);
+                    filtered = filtered.filter(task => {
+                        if (!task.dueDate) return false;
+                        const taskDate = new Date(task.dueDate);
+                        return taskDate >= today && taskDate <= nextWeek;
+                    });
+                    break;
+                case 'date':
+                    // Filter by specific date (from calendar)
+                    if (filter && filter.date) {
+                        const selectedDate = new Date(filter.date);
+                        selectedDate.setHours(0, 0, 0, 0);
+                        filtered = filtered.filter(task => {
+                            if (!task.dueDate) return false;
+                            const taskDate = new Date(task.dueDate);
+                            taskDate.setHours(0, 0, 0, 0);
+                            return taskDate.getTime() === selectedDate.getTime();
+                        });
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        // Apply standard filters (category, priority, status)
+        if (filter && filter.type) {
             switch (filter.type) {
                 case 'category':
                     filtered = filtered.filter(task => task.category === filter.value);
@@ -81,12 +144,41 @@ export default function Dashboard() {
 
     const handleFilterChange = (filter) => {
         setCurrentFilter(filter);
-        applyFilter(tasks, filter, searchQuery);
+        setQuickAccessFilter(null);
+        applyFilter(tasks, filter, searchQuery, null);
     };
 
     const clearFilter = () => {
         setCurrentFilter(null);
-        applyFilter(tasks, null, searchQuery);
+        setQuickAccessFilter(null);
+        applyFilter(tasks, null, searchQuery, null);
+    };
+
+    // Quick access filter handlers
+    const handleQuickAccess = (filterType) => {
+        setQuickAccessFilter(filterType);
+        setCurrentFilter(null);
+        applyFilter(tasks, null, searchQuery, filterType);
+    };
+
+    const handleCalendarDateClick = (date) => {
+        setQuickAccessFilter('date');
+        setCurrentFilter({ date });
+        applyFilter(tasks, { date }, searchQuery, 'date');
+    };
+
+    const handleCreateTaskFromCalendar = (date) => {
+        setCurrentTask({
+            title: '',
+            description: '',
+            priority: 'Medium',
+            category: 'Work',
+            status: 'To Do',
+            dueDate: date.toISOString().split('T')[0]
+        });
+        setIsEditing(false);
+        setIsModalOpen(true);
+        setIsCalendarExpanded(false);
     };
 
     const handleConfirmDelete = async () => {
@@ -170,7 +262,7 @@ export default function Dashboard() {
 
     const handleSearchChange = (e) => {
         setSearchQuery(e.target.value);
-        applyFilter(tasks, currentFilter, e.target.value);
+        applyFilter(tasks, currentFilter, e.target.value, quickAccessFilter);
     };
 
     const handleLogout = () => {
@@ -187,11 +279,11 @@ export default function Dashboard() {
     }, [token, navigate]);
 
     useEffect(() => {
-        applyFilter(tasks, currentFilter);
-    }, [tasks, currentFilter]);
+        applyFilter(tasks, currentFilter, searchQuery, quickAccessFilter);
+    }, [tasks, currentFilter, quickAccessFilter]);
 
     return (
-        <div className="flex min-h-screen bg-gray-100">
+        <div className="flex h-screen bg-gray-100 overflow-hidden">
             <Toaster
                 position="top-center"
                 toastOptions={{
@@ -208,14 +300,22 @@ export default function Dashboard() {
                 setIsExpanded={setIsExpanded}
                 handleLogout={handleLogout}
                 user={user}
+                onQuickAccess={handleQuickAccess}
             />
             <div className={`fixed inset-0 bg-black bg-opacity-50 z-40 ${sidebarOpen ? 'block' : 'hidden'} md:hidden`} onClick={() => setSidebarOpen(false)}></div>
 
-            <main className="flex-1 transition-all duration-300">
-                <div className="p-4 md:p-10">
+            <main className="flex-1 flex flex-col h-screen overflow-hidden">
+                <div className="flex-1 overflow-y-auto scrollbar-hide p-4 md:p-10">
                     <header className="flex justify-between items-center mb-8">
                         <h1 className="text-3xl font-bold text-gray-800">Dashboard</h1>
                         <div className="flex items-center gap-4">
+                            <button
+                                onClick={() => setShowTutorial(true)}
+                                className="p-3 bg-yellow-500 text-white rounded-full hover:bg-yellow-600 transition-colors shadow-md hover:shadow-lg"
+                                title="Start Tutorial"
+                            >
+                                <FaQuestionCircle size={20} />
+                            </button>
                             <div className="relative">
                                 <FaSearch className="absolute top-1/2 left-3 -translate-y-1/2 text-gray-400" />
                                 <input
@@ -230,7 +330,7 @@ export default function Dashboard() {
                         </div>
                     </header>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div className="stats-cards grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                         <div className="bg-white p-6 rounded-2xl shadow-md flex items-center justify-between">
                             <div>
                                 <p className="text-gray-500">Total Tasks</p>
@@ -263,84 +363,194 @@ export default function Dashboard() {
                         </div>
                     </div>
 
-                    {/* Filter Section */}
-                    <div className="mb-8">
-                        <div className="flex flex-col sm:flex-row gap-4 mb-4">
-                            {/* Category Filter */}
-                            <div className="flex-1">
-                                <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">
-                                    Category
-                                </label>
-                                <select
-                                    id="category"
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
-                                    onChange={(e) => handleFilterChange({ type: 'category', value: e.target.value })}
-                                    value={currentFilter?.type === 'category' ? currentFilter.value : ''}
-                                >
-                                    <option value="">All Categories</option>
-                                    {['Work', 'Personal', 'Shopping', 'Health & Fitness', 'Home', 'Finance', 'Education', 'Social'].map(category => (
-                                        <option key={category} value={category}>{category}</option>
-                                    ))}
-                                </select>
+                    {/* Calendar and Filters Side-by-Side Layout */}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                        {/* Mini Calendar - Left Side */}
+                        <div className="mini-calendar lg:col-span-1">
+                            <Calendar
+                                tasks={tasks}
+                                onDateClick={handleCalendarDateClick}
+                                onCreateTask={handleCreateTaskFromCalendar}
+                                isExpanded={isCalendarExpanded}
+                                onToggleExpanded={() => setIsCalendarExpanded(!isCalendarExpanded)}
+                            />
+                        </div>
+
+                        {/* Filters - Right Side */}
+                        <div className="filter-section lg:col-span-2 flex flex-col gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                {/* Category Filter */}
+                                <div>
+                                    <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">
+                                        Category
+                                    </label>
+                                    <select
+                                        id="category"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                                        onChange={(e) => handleFilterChange({ type: 'category', value: e.target.value })}
+                                        value={currentFilter?.type === 'category' ? currentFilter.value : ''}
+                                    >
+                                        <option value="">All Categories</option>
+                                        {['Work', 'Personal', 'Shopping', 'Health & Fitness', 'Home', 'Finance', 'Education', 'Social'].map(category => (
+                                            <option key={category} value={category}>{category}</option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                {/* Priority Filter */}
+                                <div>
+                                    <label htmlFor="priority" className="block text-sm font-medium text-gray-700 mb-1">
+                                        Priority
+                                    </label>
+                                    <select
+                                        id="priority"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                                        onChange={(e) => handleFilterChange({ type: 'priority', value: e.target.value })}
+                                        value={currentFilter?.type === 'priority' ? currentFilter.value : ''}
+                                    >
+                                        <option value="">All Priorities</option>
+                                        {['High', 'Medium', 'Low'].map(priority => (
+                                            <option key={priority} value={priority}>{priority}</option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                {/* Status Filter */}
+                                <div>
+                                    <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-1">
+                                        Status
+                                    </label>
+                                    <select
+                                        id="status"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                                        onChange={(e) => handleFilterChange({ type: 'status', value: e.target.value })}
+                                        value={currentFilter?.type === 'status' ? currentFilter.value : ''}
+                                    >
+                                        <option value="">All Statuses</option>
+                                        {['To Do', 'In Progress', 'Completed'].map(status => (
+                                            <option key={status} value={status}>{status}</option>
+                                        ))}
+                                    </select>
+                                </div>
                             </div>
 
-                            {/* Priority Filter */}
-                            <div className="flex-1">
-                                <label htmlFor="priority" className="block text-sm font-medium text-gray-700 mb-1">
-                                    Priority
-                                </label>
-                                <select
-                                    id="priority"
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
-                                    onChange={(e) => handleFilterChange({ type: 'priority', value: e.target.value })}
-                                    value={currentFilter?.type === 'priority' ? currentFilter.value : ''}
-                                >
-                                    <option value="">All Priorities</option>
-                                    {['High', 'Medium', 'Low'].map(priority => (
-                                        <option key={priority} value={priority}>{priority}</option>
-                                    ))}
-                                </select>
-                            </div>
+                            {/* Filtered By Card */}
+                            {currentFilter && (
+                                <div className="flex items-center justify-between p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                                    <div className="flex items-center gap-2">
+                                        <span className="font-semibold text-gray-600">Filtered by:</span>
+                                        <span className="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-sm font-medium">
+                                            {currentFilter.type}: {currentFilter.value}
+                                        </span>
+                                    </div>
+                                    <Button
+                                        onClick={clearFilter}
+                                        variant="secondary"
+                                        className="text-sm"
+                                    >
+                                        Clear All Filters
+                                    </Button>
+                                </div>
+                            )}
+                        </div>
+                    </div>
 
-                            {/* Status Filter */}
-                            <div className="flex-1">
-                                <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-1">
-                                    Status
-                                </label>
-                                <select
-                                    id="status"
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
-                                    onChange={(e) => handleFilterChange({ type: 'status', value: e.target.value })}
-                                    value={currentFilter?.type === 'status' ? currentFilter.value : ''}
-                                >
-                                    <option value="">All Statuses</option>
-                                    {['To Do', 'In Progress', 'Completed'].map(status => (
-                                        <option key={status} value={status}>{status}</option>
-                                    ))}
-                                </select>
+                    {/* Detailed Statistics Widgets */}
+                    <div className="detailed-stats grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                        {/* Category Breakdown */}
+                        <div className="bg-white p-6 rounded-2xl shadow-md">
+                            <h3 className="text-lg font-bold text-gray-800 mb-4">📁 Tasks by Category</h3>
+                            <div className="space-y-3">
+                                {['Work', 'Personal', 'Shopping', 'Health', 'Other'].map(category => {
+                                    const count = tasks.filter(t => t.category === category).length;
+                                    const percentage = tasks.length > 0 ? (count / tasks.length) * 100 : 0;
+                                    return (
+                                        <div key={category}>
+                                            <div className="flex justify-between text-sm mb-1">
+                                                <span className="text-gray-600">{category}</span>
+                                                <span className="font-semibold text-gray-800">{count}</span>
+                                            </div>
+                                            <div className="w-full bg-gray-200 rounded-full h-2">
+                                                <div
+                                                    className="bg-yellow-500 h-2 rounded-full transition-all duration-300"
+                                                    style={{ width: `${percentage}%` }}
+                                                ></div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
                             </div>
                         </div>
 
-                        {currentFilter && (
-                            <div className="flex items-center justify-between p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                                <div className="flex items-center gap-2">
-                                    <span className="font-semibold text-gray-600">Filtered by:</span>
-                                    <span className="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-sm font-medium">
-                                        {currentFilter.type}: {currentFilter.value}
-                                    </span>
-                                </div>
-                                <Button
-                                    onClick={clearFilter}
-                                    variant="secondary"
-                                    className="text-sm"
-                                >
-                                    Clear All Filters
-                                </Button>
+                        {/* Priority Distribution */}
+                        <div className="bg-white p-6 rounded-2xl shadow-md">
+                            <h3 className="text-lg font-bold text-gray-800 mb-4">🎯 Priority Levels</h3>
+                            <div className="space-y-4">
+                                {[
+                                    { name: 'High', color: 'bg-red-500', textColor: 'text-red-600' },
+                                    { name: 'Medium', color: 'bg-yellow-500', textColor: 'text-yellow-600' },
+                                    { name: 'Low', color: 'bg-green-500', textColor: 'text-green-600' }
+                                ].map(priority => {
+                                    const count = tasks.filter(t => t.priority === priority.name).length;
+                                    const completed = tasks.filter(t => t.priority === priority.name && t.status === 'Completed').length;
+                                    return (
+                                        <div key={priority.name} className="flex items-center justify-between">
+                                            <div className="flex items-center gap-2">
+                                                <div className={`w-3 h-3 rounded-full ${priority.color}`}></div>
+                                                <span className="text-sm text-gray-700">{priority.name}</span>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <span className={`text-sm font-semibold ${priority.textColor}`}>
+                                                    {completed}/{count}
+                                                </span>
+                                                <span className="text-xs text-gray-500">tasks</span>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
                             </div>
-                        )}
+                        </div>
+
+                        {/* Status Overview */}
+                        <div className="bg-white p-6 rounded-2xl shadow-md">
+                            <h3 className="text-lg font-bold text-gray-800 mb-4">📊 Overall Progress</h3>
+                            <div className="space-y-4">
+                                <div>
+                                    <div className="flex justify-between text-sm mb-2">
+                                        <span className="text-gray-600">Completion Rate</span>
+                                        <span className="font-bold text-green-600">
+                                            {tasks.length > 0 ? Math.round((tasks.filter(t => t.status === 'Completed').length / tasks.length) * 100) : 0}%
+                                        </span>
+                                    </div>
+                                    <div className="w-full bg-gray-200 rounded-full h-3">
+                                        <div
+                                            className="bg-green-500 h-3 rounded-full transition-all duration-300"
+                                            style={{ width: `${tasks.length > 0 ? (tasks.filter(t => t.status === 'Completed').length / tasks.length) * 100 : 0}%` }}
+                                        ></div>
+                                    </div>
+                                </div>
+
+                                <div className="pt-3 border-t border-gray-100">
+                                    <div className="grid grid-cols-3 gap-3">
+                                        <div className="text-center">
+                                            <div className="text-2xl font-bold text-yellow-500">{tasks.filter(t => t.status === 'To Do').length}</div>
+                                            <div className="text-xs text-gray-500">To Do</div>
+                                        </div>
+                                        <div className="text-center">
+                                            <div className="text-2xl font-bold text-blue-500">{tasks.filter(t => t.status === 'In Progress').length}</div>
+                                            <div className="text-xs text-gray-500">In Progress</div>
+                                        </div>
+                                        <div className="text-center">
+                                            <div className="text-2xl font-bold text-green-500">{tasks.filter(t => t.status === 'Completed').length}</div>
+                                            <div className="text-xs text-gray-500">Done</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
-                    <div className="space-y-4">
+                    <div className="task-list space-y-4">
                         {filteredTasks.length > 0 ? (
                             filteredTasks.map((task) => (
                                 <div key={task._id} className={`bg-white p-5 rounded-lg shadow-md transition-all duration-300 ${task.status === 'Completed' ? 'opacity-60' : ''}`}>
@@ -412,6 +622,12 @@ export default function Dashboard() {
                 }}
                 task={currentTask}
                 isEditing={isEditing}
+            />
+
+            {/* Tutorial Guide */}
+            <TutorialGuide
+                isOpen={showTutorial}
+                onClose={() => setShowTutorial(false)}
             />
         </div>
     );
